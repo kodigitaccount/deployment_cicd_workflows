@@ -1,19 +1,23 @@
 name: Model Training CICD
 permissions:
   id-token: write
-  contents: write 
-  
+  contents: write
+
 on:
   - push
 
 jobs:
   run:
-    runs-on: 
+    runs-on:
       - ubuntu-latest
-    
+
     steps:
       - uses: iterative/setup-cml@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/checkout@v3
+
       - name: Train model
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -21,12 +25,15 @@ jobs:
           pip install -r requirements.txt
           python train_model.py
 
-          echo "RF and LR Model Score" >report.md
-          cat scores.txt
-          
-          echo "Confusion Matrix & Feature Importance">report1.md
-          echo '|[](./ConfusionMatrix.png "ConfusionMatrix")' >> report1.md
-          echo '|[](./FeatureImportance.png "FeatureImportance")' >> report1.md
-     
-          cat report.md report1.md >> combined_file.md
+          # Build report
+          echo "## RF and LR Model Score" > report.md
+          cat scores.txt >> report.md
+
+          # Build image report using cml publish
+          echo "## Confusion Matrix & Feature Importance" > report1.md
+          cml publish ConfusionMatrix.png --md >> report1.md
+          cml publish FeatureImportance.png --md >> report1.md
+
+          # Combine and post comment
+          cat report.md report1.md > combined_file.md
           cml comment create combined_file.md
