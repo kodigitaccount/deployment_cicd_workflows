@@ -3,7 +3,6 @@ name: Model Training CICD
 permissions:
   id-token: write
   contents: write
-
 on:
   push:
 
